@@ -16,7 +16,7 @@ typedef struct _hash_table_t {
 hash_table_t *create_hash_table(int size)
 {
     hash_table_t *new_table;
-
+    int i;
     if (size < 1) return NULL;
     if ((new_table = malloc(sizeof(hash_table_t))) == NULL)
     {
@@ -34,6 +34,7 @@ hash_table_t *create_hash_table(int size)
 
 unsigned int hash(hash_table_t *hashtable, char *str)
 {
+    int hashval;
     hashval = 0;
     for (; *str != '\0';str++) hashval = *str + (hashval << 5) -hashval;
     return hashval %hashtable->size;
@@ -48,9 +49,9 @@ list_t *lookup_string(hash_table_t *hashtable, char *str)
      * in the list.  If it is, return return a pointer to the list element.
      * If it isn't, the item isn't in the table, so return NULL.
      */
-    fot (list = hashtable->table[hashval]; list != NULL; list = list->next;)
+    for (list = hashtable->table[hashval]; list != NULL; list = list->next)
     {
-        if (strcmp(str, list->str) == 0) return list;
+        if (strcmp(str, list->string) == 0) return list;
     }
     return NULL;
 }
@@ -68,7 +69,7 @@ int add_string(hash_table_t *hashtable, char *str){
     /* item already exists, don't insert it again. */
     if (current_list != NULL) return 2;
     /* Insert into list */
-    new_list->str = strdup(str);
+    new_list->string = strdup(str);
     new_list->next = hashtable->table[hashval];
     hashtable->table[hashval] = new_list;
     return 0;
@@ -89,7 +90,7 @@ void free_table(hash_table_t *hashtable)
         while(list!=NULL) {
             temp = list;
             list = list->next;
-            free(temp->str);
+            free(temp->string);
             free(temp);
         }
     }
@@ -102,7 +103,10 @@ void free_table(hash_table_t *hashtable)
 
 
 int main() {
-
+    int n;
+    hash_table_t *t;
+    scanf("%d",&n);
+    t = create_hash_table(n);
 
     /* Enter your code here. Read input from STDIN. Print output to STDOUT */
     return 0;
