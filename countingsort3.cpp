@@ -6,25 +6,24 @@
 #include <algorithm>
 using namespace std;
 
-//https://www.hackerrank.com/challenges/countingsort2
+//https://www.hackerrank.com/challenges/countingsort3
 
 int main() {
     /* Enter your code here. Read input from STDIN. Print output to STDOUT */
+    int counter = 0;
     int t;
-    int item;
+    int num;
+    string str;
     cin >> t;
     vector<int> cntr(100);
     for (int i = 0; i < t; i++) {
-        cin >> item;
-        cntr[item]++;
+        cin >> num >> str;
+        cntr[num]++;
 
     }
     for (int i = 0; i < 100; i++) {
-        while (cntr[i] > 0) {
-            cout << i << " ";
-            cntr[i]--;
-        }
-
+        counter += cntr[i];
+        cout << counter << " ";
     }
     return 0;
 }
