@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-const MAX_INT = ^0 >> 1
+
 
 // https://www.hackerrank.com/challenges/dijkstrashortreach
 
@@ -27,17 +27,19 @@ func (n *Node) addEdge(start int, stop int, distance int) {
 	}
 	if _, ok := n.edges[start][stop]; !ok {
 		n.edges[start][stop] = &Edge{
-			distances: []int{distance},
+			distance: distance,
 		}
 		return
 	}
-	n.edges[start][stop].distances = append(n.edges[start][stop].distances, distance)
+	if n.edges[start][stop].distance > distance {
+		n.edges[start][stop].distance = distance
+	}
 }
 
 type Edge struct {
-	start     int
-	stop      int
-	distances []int
+	start    int
+	stop     int
+	distance int
 }
 
 func main() {
@@ -67,19 +69,39 @@ func process() {
 			nodes[x] = &Node{
 				id:     x,
 				edges:  make(map[int]map[int]*Edge, 0),
-				weight: MAX_INT,
+				weight: -1,
+			}
+		}
+		if nodes[y] == nil {
+			nodes[y] = &Node{
+				id:     y,
+				edges:  make(map[int]map[int]*Edge, 0),
+				weight: -1,
 			}
 		}
 		nodes[x].addEdge(x, y, r)
+		nodes[x].addEdge(y, x, r)
 		fmt.Printf("node %d = %s\n", x, nodes[x])
 	}
 	fmt.Scanf("%d", &s)
 	nodes[s].weight = 0
-
-	for i:= 1; i < n; i++ {
+	for i := 1; i < n; i++ {
+		//if i == s {
+		//	continue
+		//}
+		for _, edgesMap := range nodes[s].edges {
+			for stop, edge := range edgesMap {
+				fmt.Printf("for: %d, nodes[%d]: %d\n", i, stop, nodes[stop])
+				if nodes[stop].weight < 0 || nodes[stop].weight > nodes[i].weight + edge.distance {
+					nodes[stop].weight = nodes[i].weight + edge.distance
+				}
+			}
+		}
+	}
+	for i := 1; i <= n; i++ {
 		if i == s {
 			continue
 		}
-		
+		fmt.Printf("node: %d, weight: %d\n", i, nodes[i].weight)
 	}
 }
