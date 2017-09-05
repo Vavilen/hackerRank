@@ -76,5 +76,10 @@ func process() {
 	fmt.Scanf("%d", &s)
 	nodes[s].weight = 0
 
-
+	for i:= 1; i < n; i++ {
+		if i == s {
+			continue
+		}
+		
+	}
 }
