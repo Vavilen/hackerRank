@@ -4,42 +4,28 @@ import (
 	"fmt"
 )
 
-
-
 // https://www.hackerrank.com/challenges/dijkstrashortreach
 
 type Node struct {
-	id     int
-	weight int
-	edges  map[int]map[int]*Edge
+	id        int
+	weight    int
+	processed bool
+	edges     map[int]int
 }
 
 func (n *Node) checkNodeOrInit() {
 	if n.edges == nil {
-		n.edges = make(map[int]map[int]*Edge, 0)
+		n.edges = make(map[int]int, 0)
 		n.weight = 0
 	}
 }
 
-func (n *Node) addEdge(start int, stop int, distance int) {
-	if _, ok := n.edges[start]; !ok {
-		n.edges[start] = make(map[int]*Edge, 0)
+func (n *Node) addEdge(stop int, distance int) {
+	if _, ok := n.edges[stop]; !ok {
+		n.edges[stop] = distance
+	} else if n.edges[stop] > distance {
+		n.edges[stop] = distance
 	}
-	if _, ok := n.edges[start][stop]; !ok {
-		n.edges[start][stop] = &Edge{
-			distance: distance,
-		}
-		return
-	}
-	if n.edges[start][stop].distance > distance {
-		n.edges[start][stop].distance = distance
-	}
-}
-
-type Edge struct {
-	start    int
-	stop     int
-	distance int
 }
 
 func main() {
@@ -49,6 +35,29 @@ func main() {
 	for i := 0; i < t; i++ {
 		process()
 	}
+}
+
+type Queue struct {
+	exists map[int]bool
+	queue  []int
+}
+
+func (q *Queue) enqueue(node int) {
+	if _, ok := q.exists[node]; !ok {
+		q.queue = append(q.queue, node)
+		q.exists[node] = true
+	}
+}
+
+func (q *Queue) dequeue() int {
+	var node = q.queue[0]
+	q.queue = q.queue[1:]
+	delete(q.exists, node)
+	return node
+}
+
+func (q *Queue) isEmpty() bool {
+	return len(q.queue) == 0
 }
 
 func process() {
@@ -67,41 +76,67 @@ func process() {
 		fmt.Scanf("%d %d %d", &x, &y, &r)
 		if nodes[x] == nil {
 			nodes[x] = &Node{
-				id:     x,
-				edges:  make(map[int]map[int]*Edge, 0),
-				weight: -1,
+				id:        x,
+				edges:     make(map[int]int, 0),
+				weight:    -1,
+				processed: false,
 			}
 		}
 		if nodes[y] == nil {
 			nodes[y] = &Node{
-				id:     y,
-				edges:  make(map[int]map[int]*Edge, 0),
-				weight: -1,
+				id:        y,
+				edges:     make(map[int]int, 0),
+				weight:    -1,
+				processed: false,
 			}
 		}
-		nodes[x].addEdge(x, y, r)
-		nodes[x].addEdge(y, x, r)
-		fmt.Printf("node %d = %s\n", x, nodes[x])
+
+		nodes[x].addEdge(y, r)
+		nodes[y].addEdge(x, r)
+		//fmt.Printf("node %d = %s\n", x, nodes[x])
 	}
 	fmt.Scanf("%d", &s)
 	nodes[s].weight = 0
-	for i := 1; i < n; i++ {
-		//if i == s {
-		//	continue
-		//}
-		for _, edgesMap := range nodes[s].edges {
-			for stop, edge := range edgesMap {
-				fmt.Printf("for: %d, nodes[%d]: %d\n", i, stop, nodes[stop])
-				if nodes[stop].weight < 0 || nodes[stop].weight > nodes[i].weight + edge.distance {
-					nodes[stop].weight = nodes[i].weight + edge.distance
+	var queue = Queue{
+		queue:  make([]int, 0),
+		exists: make(map[int]bool, 0),
+	}
+	queue.enqueue(s)
+	nodes[s].processed = true
+	for !queue.isEmpty() {
+		var current = queue.dequeue()
+		var minDistance = 0
+		var minDistanceIdx = 0
+		//fmt.Printf("after dequeued: %s=\n", queue)
+		nodes[current].processed = true
+		fmt.Printf("current: %d, weight: %d, processed: %s\n", current, nodes[current].weight, nodes[current].processed)
+		for stop, distance := range nodes[current].edges {
+			if stop == 7 {
+				fmt.Printf("for: %d, nodes[%d]: %d\n", current, stop, nodes[stop])
+			}
+			if nodes[stop].weight < 0 || nodes[stop].weight > nodes[current].weight+distance {
+				nodes[stop].weight = nodes[current].weight + distance
+				fmt.Printf("current: %d, setted nodeId: %d, weight: %d\n", current, stop, nodes[stop].weight)
+				if (minDistance == 0 || minDistance > nodes[stop].weight) && !nodes[stop].processed {
+					minDistance = nodes[stop].weight
+					minDistanceIdx = stop
 				}
 			}
+
+		}
+		fmt.Printf("new current: %d\n", minDistanceIdx)
+		if minDistanceIdx != 0 {
+			queue.enqueue(minDistanceIdx)
 		}
 	}
 	for i := 1; i <= n; i++ {
 		if i == s {
 			continue
 		}
-		fmt.Printf("node: %d, weight: %d\n", i, nodes[i].weight)
+		fmt.Printf("%d", nodes[i].weight)
+		if i < n {
+			fmt.Print(" ")
+		}
 	}
+	fmt.Print("\n")
 }
