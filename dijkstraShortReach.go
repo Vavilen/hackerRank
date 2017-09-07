@@ -102,32 +102,39 @@ func process() {
 		exists: make(map[int]bool, 0),
 	}
 	queue.enqueue(s)
-	nodes[s].processed = true
+	//nodes[s].processed = true
 	for !queue.isEmpty() {
 		var current = queue.dequeue()
-		var minDistance = 0
-		var minDistanceIdx = 0
+		//var minDistance = 0
+		//var minDistanceIdx = 0
 		//fmt.Printf("after dequeued: %s=\n", queue)
-		nodes[current].processed = true
 		fmt.Printf("current: %d, weight: %d, processed: %s\n", current, nodes[current].weight, nodes[current].processed)
+		if nodes[current].processed {
+			continue
+		}
+		nodes[current].processed = true
 		for stop, distance := range nodes[current].edges {
 			if stop == 7 {
 				fmt.Printf("for: %d, nodes[%d]: %d\n", current, stop, nodes[stop])
 			}
 			if nodes[stop].weight < 0 || nodes[stop].weight > nodes[current].weight+distance {
+				fmt.Printf("WILL set for nodeId: %d with weight: %d => ", stop, nodes[stop].weight)
 				nodes[stop].weight = nodes[current].weight + distance
-				fmt.Printf("current: %d, setted nodeId: %d, weight: %d\n", current, stop, nodes[stop].weight)
-				if (minDistance == 0 || minDistance > nodes[stop].weight) && !nodes[stop].processed {
-					minDistance = nodes[stop].weight
-					minDistanceIdx = stop
-				}
+				fmt.Printf("current: %d with weight: %d, setted nodeId: %d with distance: %d, weight: %d\n",
+					current, nodes[current].weight, stop, distance, nodes[stop].weight)
+				//if (minDistance == 0 || minDistance > nodes[stop].weight) && !nodes[stop].processed {
+				//	minDistance = nodes[stop].weight
+				//	minDistanceIdx = stop
+				//}
 			}
-
+			if !nodes[stop].processed {
+				queue.enqueue(stop)
+			}
 		}
-		fmt.Printf("new current: %d\n", minDistanceIdx)
-		if minDistanceIdx != 0 {
-			queue.enqueue(minDistanceIdx)
-		}
+		//fmt.Printf("new current: %d\n", minDistanceIdx)
+		//if minDistanceIdx != 0 {
+		//	queue.enqueue(minDistanceIdx)
+		//}
 	}
 	for i := 1; i <= n; i++ {
 		if i == s {
