@@ -133,7 +133,7 @@ func process() {
 	queue.enqueue(s)
 	//nodes[s].processed = true
 	for !queue.isEmpty() {
-		var current = queue.dequeue()
+		var current = queue.pop()
 		//var minDistance = 0
 		//var minDistanceIdx = 0
 		//fmt.Printf("after dequeued: %s=\n", queue)
@@ -158,7 +158,7 @@ func process() {
 		}
 		tmpList = qsort(tmpList)
 		for _, item := range tmpList {
-			if !nodes[current].processed {
+			if !nodes[item[0]].processed {
 				queue.enqueue(item[0])
 			}
 		}
