@@ -131,15 +131,19 @@ func process() {
 		exists: make(map[int]bool, 0),
 	}
 	queue.enqueue(s)
+	//nodes[s].processed = true
 	for !queue.isEmpty() {
-		var current = queue.pop()
+		var current = queue.dequeue()
+		//var minDistance = 0
+		//var minDistanceIdx = 0
+		//fmt.Printf("after dequeued: %s=\n", queue)
+		fmt.Printf("current: %d, weight: %d, processed: %s\n", current, nodes[current].weight, nodes[current].processed)
+
+		var tmpList = make([][]int, 0)
 		if nodes[current].processed {
 			continue
 		}
-		//fmt.Printf("after dequeued: %s=\n", queue)
 		nodes[current].processed = true
-		fmt.Printf("current: %d, weight: %d, processed: %s\n", current, nodes[current].weight, nodes[current].processed)
-		var tmpList = make([][]int, 0)
 		for stop, distance := range nodes[current].edges {
 			if stop == 7 {
 				fmt.Printf("for: %d, nodes[%d]: %d\n", current, stop, nodes[stop])
@@ -154,8 +158,14 @@ func process() {
 		}
 		tmpList = qsort(tmpList)
 		for _, item := range tmpList {
-			queue.enqueue(item[0])
+			if !nodes[current].processed {
+				queue.enqueue(item[0])
+			}
 		}
+		//fmt.Printf("new current: %d\n", minDistanceIdx)
+		//if minDistanceIdx != 0 {
+		//	queue.enqueue(minDistanceIdx)
+		//}
 	}
 	for i := 1; i <= n; i++ {
 		if i == s {
