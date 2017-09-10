@@ -6,6 +6,8 @@ import (
 
 // https://www.hackerrank.com/challenges/dijkstrashortreach
 
+const DEFAULT_WEIGHT = -1
+
 type Node struct {
 	id        int
 	weight    int
@@ -28,7 +30,6 @@ func (n *Node) addEdge(stop int, distance int) {
 	}
 }
 
-
 func main() {
 	var t int // tests count
 	fmt.Scanf("%d", &t)
@@ -47,7 +48,16 @@ func (q *Queue) enqueue(node int) {
 	if _, ok := q.exists[node]; !ok {
 		q.queue = append(q.queue, node)
 		q.exists[node] = true
+	} else {
+		fmt.Printf("node %d exists. skip\n", node)
 	}
+}
+
+func (q *Queue) existsNode(node int) bool {
+	if _, ok := q.exists[node]; ok {
+		return true
+	}
+	return false
 }
 
 func (q *Queue) dequeue() int {
@@ -59,11 +69,11 @@ func (q *Queue) dequeue() int {
 
 func (q *Queue) pop() int {
 	var n = len(q.queue)
-	var value = q.queue[n - 1]
-	q.queue = q.queue[:n -1]
+	var value = q.queue[n-1]
+	q.queue = q.queue[:n-1]
+	delete(q.exists, value)
 	return value
 }
-
 
 func (q *Queue) isEmpty() bool {
 	return len(q.queue) == 0
@@ -77,7 +87,7 @@ func qsort(list [][]int) [][]int {
 	var pivot int = len(list) - 1
 	var right int = len(list) - 1
 	for i := 0; i < right; i++ {
-		if list[i][1] > list[pivot][1] {
+		if list[i][1] < list[pivot][1] {
 			list[i], list[left] = list[left], list[i]
 			left++
 		}
@@ -87,7 +97,6 @@ func qsort(list [][]int) [][]int {
 	qsort(list[left+1:])
 	return list
 }
-
 
 func process() {
 	var n int // nodes count
@@ -107,7 +116,7 @@ func process() {
 			nodes[x] = &Node{
 				id:        x,
 				edges:     make(map[int]int, 0),
-				weight:    9223372036854775807,
+				weight:    DEFAULT_WEIGHT,
 				processed: false,
 			}
 		}
@@ -115,7 +124,7 @@ func process() {
 			nodes[y] = &Node{
 				id:        y,
 				edges:     make(map[int]int, 0),
-				weight:    9223372036854775807,
+				weight:    DEFAULT_WEIGHT,
 				processed: false,
 			}
 		}
@@ -133,11 +142,11 @@ func process() {
 	queue.enqueue(s)
 	//nodes[s].processed = true
 	for !queue.isEmpty() {
-		var current = queue.pop()
+		var current = queue.dequeue()
 		//var minDistance = 0
 		//var minDistanceIdx = 0
 		//fmt.Printf("after dequeued: %s=\n", queue)
-		fmt.Printf("current: %d, weight: %d, processed: %s\n", current, nodes[current].weight, nodes[current].processed)
+		//fmt.Printf("current: %d, weight: %d, processed: %s\n", current, nodes[current].weight, nodes[current].processed)
 
 		var tmpList = make([][]int, 0)
 		if nodes[current].processed {
@@ -145,27 +154,36 @@ func process() {
 		}
 		nodes[current].processed = true
 		for stop, distance := range nodes[current].edges {
-			if stop == 7 {
-				fmt.Printf("for: %d, nodes[%d]: %d\n", current, stop, nodes[stop])
-			}
-			if !nodes[stop].processed && (nodes[stop].weight == 9223372036854775807 || nodes[stop].weight > nodes[current].weight+distance) {
+			//if stop == 7 {
+			//	fmt.Printf("for: %d, nodes[%d]: %d\n", current, stop, nodes[stop])
+			//}
+			if !nodes[stop].processed && (nodes[stop].weight == DEFAULT_WEIGHT || nodes[stop].weight > nodes[current].weight+distance) {
 				nodes[stop].weight = nodes[current].weight + distance
-				fmt.Printf("current: %d, setted nodeId: %d, weight: %d\n", current, stop, nodes[stop].weight)
-				if !nodes[stop].processed {
-					tmpList = append(tmpList, []int{stop, nodes[stop].weight})
-				}
+				//fmt.Printf("current: %d, setted nodeId: %d, weight: %d\n", current, stop, nodes[stop].weight)
+				tmpList = append(tmpList, []int{stop, nodes[stop].weight})
 			}
 		}
+
+		fmt.Printf("unsorted: %s\n\n\n", tmpList)
 		tmpList = qsort(tmpList)
+		fmt.Printf("sorted: %s\n\n\n", tmpList)
 		for _, item := range tmpList {
 			if !nodes[item[0]].processed {
 				queue.enqueue(item[0])
 			}
 		}
+		fmt.Printf("queue after enqueue: %s\n", queue.queue)
+
 		//fmt.Printf("new current: %d\n", minDistanceIdx)
 		//if minDistanceIdx != 0 {
 		//	queue.enqueue(minDistanceIdx)
 		//}
+	}
+	for i := 1; i <= n; i++ {
+		if i == s {
+			continue
+		}
+		fmt.Printf("%d => %s\n", i, nodes[i].processed)
 	}
 	for i := 1; i <= n; i++ {
 		if i == s {
