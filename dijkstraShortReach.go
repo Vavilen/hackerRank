@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 )
 
 // https://www.hackerrank.com/challenges/dijkstrashortreach
@@ -30,72 +31,45 @@ func (n *Node) addEdge(stop int, distance int) {
 	}
 }
 
-func main() {
-	var t int // tests count
-	fmt.Scanf("%d", &t)
-
-	for i := 0; i < t; i++ {
-		process()
-	}
+type Item struct {
+	value    int
+	priority int
+	index    int
 }
 
-type Queue struct {
-	exists map[int]bool
-	queue  []int
+type PriorityQueue []*Item
+
+// Len - get the length of the heap
+func (pq PriorityQueue) Len() int { return len(pq) }
+
+// Less - determine which is more priority than another
+func (pq PriorityQueue) Less(i, j int) bool {
+	return pq[i].priority > pq[j].priority
 }
 
-func (q *Queue) enqueue(node int) {
-	if _, ok := q.exists[node]; !ok {
-		q.queue = append(q.queue, node)
-		q.exists[node] = true
-	} else {
-		fmt.Printf("node %d exists. skip\n", node)
-	}
+// Swap - implementation of swap for the heap interface
+func (pq PriorityQueue) Swap(i, j int) {
+	pq[i], pq[j] = pq[j], pq[i]
+	pq[i].index = i
+	pq[j].index = j
 }
 
-func (q *Queue) existsNode(node int) bool {
-	if _, ok := q.exists[node]; ok {
-		return true
-	}
-	return false
+// Push - implementation of push for the heap interface
+func (pq *PriorityQueue) Push(x *Item) {
+	n := len(*pq)
+	item := x
+	item.index = n
+	*pq = append(*pq, item)
 }
 
-func (q *Queue) dequeue() int {
-	var node = q.queue[0]
-	q.queue = q.queue[1:]
-	delete(q.exists, node)
-	return node
-}
-
-func (q *Queue) pop() int {
-	var n = len(q.queue)
-	var value = q.queue[n-1]
-	q.queue = q.queue[:n-1]
-	delete(q.exists, value)
-	return value
-}
-
-func (q *Queue) isEmpty() bool {
-	return len(q.queue) == 0
-}
-
-func qsort(list [][]int) [][]int {
-	if len(list) < 2 {
-		return list
-	}
-	var left int = 0
-	var pivot int = len(list) - 1
-	var right int = len(list) - 1
-	for i := 0; i < right; i++ {
-		if list[i][1] < list[pivot][1] {
-			list[i], list[left] = list[left], list[i]
-			left++
-		}
-	}
-	list[left], list[pivot] = list[pivot], list[left]
-	qsort(list[:left])
-	qsort(list[left+1:])
-	return list
+// Pop - implementation of pop for heap interface
+func (pq *PriorityQueue) Pop() *Item {
+	old := *pq
+	n := len(old)
+	item := old[n-1]
+	item.index = -1 // for safety
+	*pq = old[0: n-1]
+	return item
 }
 
 func process() {
@@ -131,60 +105,36 @@ func process() {
 
 		nodes[x].addEdge(y, r)
 		nodes[y].addEdge(x, r)
-		//fmt.Printf("node %d = %s\n", x, nodes[x])
 	}
 	fmt.Scanf("%d", &s)
 	nodes[s].weight = 0
-	var queue = Queue{
-		queue:  make([]int, 0),
-		exists: make(map[int]bool, 0),
-	}
-	queue.enqueue(s)
-	//nodes[s].processed = true
-	for !queue.isEmpty() {
-		var current = queue.dequeue()
-		//var minDistance = 0
-		//var minDistanceIdx = 0
-		//fmt.Printf("after dequeued: %s=\n", queue)
-		//fmt.Printf("current: %d, weight: %d, processed: %s\n", current, nodes[current].weight, nodes[current].processed)
-
-		var tmpList = make([][]int, 0)
-		if nodes[current].processed {
+	var heap = PriorityQueue{}
+	heap.Push(
+		&Item{
+			value:    s,
+			priority: 0,
+		},
+	)
+	for heap.Len() > 0 {
+		var current = heap.Pop()
+		if nodes[current.value].processed {
 			continue
 		}
-		nodes[current].processed = true
-		for stop, distance := range nodes[current].edges {
-			//if stop == 7 {
-			//	fmt.Printf("for: %d, nodes[%d]: %d\n", current, stop, nodes[stop])
-			//}
-			if !nodes[stop].processed && (nodes[stop].weight == DEFAULT_WEIGHT || nodes[stop].weight > nodes[current].weight+distance) {
-				nodes[stop].weight = nodes[current].weight + distance
-				//fmt.Printf("current: %d, setted nodeId: %d, weight: %d\n", current, stop, nodes[stop].weight)
-				tmpList = append(tmpList, []int{stop, nodes[stop].weight})
+		nodes[current.value].processed = true
+		for stop, distance := range nodes[current.value].edges {
+			if !nodes[stop].processed && (nodes[stop].weight == DEFAULT_WEIGHT || nodes[stop].weight > nodes[current.value].weight+distance) {
+				nodes[stop].weight = nodes[current.value].weight + distance
+				heap.Push(
+					&Item{
+						value:    stop,
+						priority: nodes[stop].weight,
+					},
+				)
 			}
 		}
-
-		fmt.Printf("unsorted: %s\n\n\n", tmpList)
-		tmpList = qsort(tmpList)
-		fmt.Printf("sorted: %s\n\n\n", tmpList)
-		for _, item := range tmpList {
-			if !nodes[item[0]].processed {
-				queue.enqueue(item[0])
-			}
-		}
-		fmt.Printf("queue after enqueue: %s\n", queue.queue)
-
-		//fmt.Printf("new current: %d\n", minDistanceIdx)
-		//if minDistanceIdx != 0 {
-		//	queue.enqueue(minDistanceIdx)
-		//}
+		sort.Sort(heap)
 	}
-	for i := 1; i <= n; i++ {
-		if i == s {
-			continue
-		}
-		fmt.Printf("%d => %s\n", i, nodes[i].processed)
-	}
+
 	for i := 1; i <= n; i++ {
 		if i == s {
 			continue
@@ -195,4 +145,13 @@ func process() {
 		}
 	}
 	fmt.Print("\n")
+}
+
+func main() {
+	var t int // tests count
+	fmt.Scanf("%d", &t)
+
+	for i := 0; i < t; i++ {
+		process()
+	}
 }
