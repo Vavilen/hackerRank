@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sort"
+	"github.com/pkg/errors"
 )
 
 // https://www.hackerrank.com/challenges/dijkstrashortreach
@@ -29,6 +30,60 @@ func (n *Node) addEdge(stop int, distance int) {
 	} else if n.edges[stop] > distance {
 		n.edges[stop] = distance
 	}
+}
+
+type Tree struct {
+	Root *TreeNode
+	Min  int
+}
+
+type TreeNode struct {
+	Distance int
+	Idx      int
+	Left     *TreeNode
+	Right    *TreeNode
+}
+
+func (n *TreeNode) Insert(distance int, idx int) error {
+	if n == nil {
+		return errors.New("can`t insert into nil node")
+	}
+	switch {
+	case distance == n.Distance:
+		return nil
+	case distance < n.Distance:
+		if n.Left == nil {
+			n.Left = &TreeNode{Distance: distance, Idx: idx}
+		} else {
+			n.Left.Insert(distance, idx)
+		}
+	case distance > n.Distance:
+		if n.Right == nil {
+			n.Right = &TreeNode{Distance: distance, Idx: idx}
+		} else {
+			n.Right.Insert(distance, idx)
+		}
+	}
+	return nil
+}
+
+func (n *TreeNode) ReplaceNode(parent, replacment *TreeNode) error {
+	if n == nil {
+		return errors.New("can`t replace nil node")
+	}
+	if n == parent.Left {
+		parent.Left = replacment
+		return nil
+	}
+	parent.Right = replacment
+	return nil
+}
+
+func (n *TreeNode) Pop(root *TreeNode) *TreeNode {
+	if root.Left == nil {
+		return root
+	}
+	if 
 }
 
 type Item struct {
