@@ -1,58 +1,93 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
-import javax.swing.InternalFrameFocusTraversalPolicy;
 
 public class Solution {
 
-    public static void main(String[] args) {
-        Scanner in = new Scanner(System.in);
-        int casesCount = in.nextInt();
+    public static void main(String[] args) throws IOException {
+        BufferedReader bi = new BufferedReader(new InputStreamReader(System.in));
+        String line;
+//        Scanner in = new Scanner(System.in);
+        line = bi.readLine();
+        int casesCount = Integer.parseInt(line);
         for (int i = 0; i < casesCount; i++) {
-            Graph graph = new Graph();
-            Graph guessedGraph = new Graph();
-            int verticesCount = in.nextInt();
+            line = bi.readLine();
+            int verticesCount = Integer.parseInt(line);
+            ArrayList<HashMap<Integer, Boolean>> graph = new ArrayList<>(verticesCount + 1);
+            ArrayList<HashMap<Integer, Boolean>> guessedGraph = new ArrayList<>(verticesCount + 1);
+
+            for (int iii = 0; iii <= verticesCount; iii++)
+                graph.add(new HashMap<>());
+
             for (int j = 0; j < verticesCount - 1; j++) {
-                int u = in.nextInt();
-                int v = in.nextInt();
-                Vertex one = new Vertex(u);
-                Vertex two = new Vertex(v);
-                graph.addVertex(one);
-                graph.addVertex(two);
-                graph.addEdge(one, two);
+                line = bi.readLine();
+                String[] numStr = line.split("\\s");
+                int u = Integer.parseInt(numStr[0]);
+                int v = Integer.parseInt(numStr[1]);
+                graph.get(u).put(v, true);
+                graph.get(v).put(u, true);
             }
 
-            int guessesCount = in.nextInt();
-            int minimumScoreToWin = in.nextInt();
-            for (int a1 = 0; a1 < guessesCount; a1++) {
-                int u = in.nextInt();
-                int v = in.nextInt();
-                Vertex one = new Vertex(u);
-                Vertex two = new Vertex(v);
-                guessedGraph.addVertex(one);
-                guessedGraph.addVertex(two);
-                guessedGraph.addEdge(one, two, false);
-            }
 
-            for (int currentRoot = 1; currentRoot < verticesCount; currentRoot++) {
+            line = bi.readLine();
+            String[] numStr = line.split("\\s");
+            int guessesCount = Integer.parseInt(numStr[0]);
+            int minimumScoreToWin = Integer.parseInt(numStr[1]);
+
+
+            for (int iii = 0; iii <= verticesCount; iii++)
+                guessedGraph.add(new HashMap<>());
+            for (int j = 0; j < guessesCount; j++) {
+                line = bi.readLine();
+                numStr = line.split("\\s");
+                int u = Integer.parseInt(numStr[0]);
+                int v = Integer.parseInt(numStr[1]);
+                guessedGraph.get(v).put(u, true);
+            }
+            int totalWon = 0;
+            for (int currentRoot = 1; currentRoot <= verticesCount; currentRoot++) {
                 Found guessesAreTrueCount = new Found();
                 HashMap<Integer, Boolean> visited = new HashMap<>();
-                process(guessesAreTrueCount, visited, currentRoot, graph, guessedGraph);
-                System.out.println("root: " + currentRoot + ", guessesAreTrueCount : " + guessesAreTrueCount.getFound());
+                process(minimumScoreToWin, guessesAreTrueCount, visited, currentRoot, graph, guessedGraph);
+                if (guessesAreTrueCount.getFound() >= minimumScoreToWin) {
+                    totalWon++;
+                }
             }
-            System.out.println("Done");
+            int D = gcd(totalWon, verticesCount);
+
+            if (totalWon == 0)
+                System.out.println(totalWon / D + "/" + 1);
+            else
+                System.out.println(totalWon / D + "/" + verticesCount / D);
         }
     }
 
-    static void process(Found found, HashMap<Integer, Boolean> visited, int current, Graph graph, Graph guessedGraph) {
+    public static int gcd(int p, int q) {
+        if (q == 0) {
+            return p;
+        }
+        return gcd(q, p % q);
+    }
 
+    static void process(int minimumScoreToWin, Found found, HashMap<Integer, Boolean> visited, int current, ArrayList<HashMap<Integer, Boolean>> graph, ArrayList<HashMap<Integer, Boolean>> guessedGraph) {
+        if (found.getFound() >= minimumScoreToWin) {
+            return;
+        }
         visited.put(current, true);
-        Vertex vertex = graph.getVertex(current);
-        ArrayList<Edge> edges = vertex.getNeighborhood();
-        for (Edge edge :
-                edges) {
-            Vertex neighbor = edge.getNeighbor(vertex);
-            if (!visited.containsKey(neighbor.getIdx()) && guessedGraph.getEdge(new Edge(vertex, neighbor)) != null) {
-                found.increment();
-                process(found, visited, neighbor.getIdx(), graph, guessedGraph);
+
+        HashMap<Integer, Boolean> edges = graph.get(current);
+        for (Integer edge :
+                edges.keySet()) {
+
+            if (!visited.containsKey(edge)) {
+                if (guessedGraph.get(edge) != null && guessedGraph.get(edge).containsKey(current)) {
+                    found.increment();
+                }
+                process(minimumScoreToWin, found, visited, edge, graph, guessedGraph);
+                if (found.getFound() >= minimumScoreToWin) {
+                    return;
+                }
             }
         }
     }
@@ -72,5 +107,7 @@ public class Solution {
             this.found++;
         }
     }
+
+
 }
 

@@ -22,9 +22,9 @@ public class Graph {
             return false;
         }
         edges.put(edge.hashCode(), edge);
-        one.addNeighbor(edge);
+        vertices.get(one.getIdx()).addNeighbor(edge);
         if (isBedirectional) {
-            two.addNeighbor(edge);
+            vertices.get(two.getIdx()).addNeighbor(edge);
         }
         return true;
     }
