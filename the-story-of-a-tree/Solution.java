@@ -3,12 +3,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 
+import com.sun.jmx.remote.internal.ArrayQueue;
+
 public class Solution {
 
     public static void main(String[] args) throws IOException {
         BufferedReader bi = new BufferedReader(new InputStreamReader(System.in));
         String line;
-//        Scanner in = new Scanner(System.in);
         line = bi.readLine();
         int casesCount = Integer.parseInt(line);
         for (int i = 0; i < casesCount; i++) {
@@ -71,22 +72,21 @@ public class Solution {
     }
 
     static void process(int minimumScoreToWin, Found found, HashMap<Integer, Boolean> visited, int current, ArrayList<HashMap<Integer, Boolean>> graph, ArrayList<HashMap<Integer, Boolean>> guessedGraph) {
-        if (found.getFound() >= minimumScoreToWin) {
-            return;
-        }
-        visited.put(current, true);
-
-        HashMap<Integer, Boolean> edges = graph.get(current);
-        for (Integer edge :
-                edges.keySet()) {
-
-            if (!visited.containsKey(edge)) {
-                if (guessedGraph.get(edge) != null && guessedGraph.get(edge).containsKey(current)) {
-                    found.increment();
-                }
-                process(minimumScoreToWin, found, visited, edge, graph, guessedGraph);
-                if (found.getFound() >= minimumScoreToWin) {
-                    return;
+        ArrayDeque<Integer> queue = new ArrayDeque<>(graph.size());
+        queue.add(current);
+        while (!queue.isEmpty() && found.getFound() < minimumScoreToWin) {
+            current = queue.pop();
+            visited.put(current, true);
+            HashMap<Integer, Boolean> edges = graph.get(current);
+            for (Integer edge :
+                    edges.keySet()) {
+                if (!visited.containsKey(edge)) {
+                    if (guessedGraph.get(edge) != null) {
+                        queue.add(edge);
+                        if (guessedGraph.get(edge).containsKey(current)) {
+                            found.increment();
+                        }
+                    }
                 }
             }
         }
