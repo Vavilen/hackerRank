@@ -1,60 +1,58 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 
-import com.sun.jmx.remote.internal.ArrayQueue;
+// https://www.hackerrank.com/challenges/the-story-of-a-tree
 
 public class Solution {
-
+    static ArrayList<ArrayList<Integer>> graph = new ArrayList<>();
+    static ArrayList<HashSet<Integer>> guessedGraph = new ArrayList<>();
+    static int minimumScoreToWin;
     public static void main(String[] args) throws IOException {
+
         BufferedReader bi = new BufferedReader(new InputStreamReader(System.in));
         String line;
         line = bi.readLine();
         int casesCount = Integer.parseInt(line);
         for (int i = 0; i < casesCount; i++) {
+            graph.clear();
+            guessedGraph.clear();
+
             line = bi.readLine();
             int verticesCount = Integer.parseInt(line);
-            ArrayList<HashMap<Integer, Boolean>> graph = new ArrayList<>(verticesCount + 1);
-            ArrayList<HashMap<Integer, Boolean>> guessedGraph = new ArrayList<>(verticesCount + 1);
 
-            for (int iii = 0; iii <= verticesCount; iii++)
-                graph.add(new HashMap<>());
-
+            for (int ii = 0; ii <= verticesCount; ii++) {
+                graph.add(new ArrayList<>());
+                guessedGraph.add(new HashSet<Integer>());
+            }
             for (int j = 0; j < verticesCount - 1; j++) {
                 line = bi.readLine();
                 String[] numStr = line.split("\\s");
-                int u = Integer.parseInt(numStr[0]);
-                int v = Integer.parseInt(numStr[1]);
-                graph.get(u).put(v, true);
-                graph.get(v).put(u, true);
+                int u = Integer.parseInt(numStr[0]) - 1;
+                int v = Integer.parseInt(numStr[1]) - 1;
+                graph.get(u).add(v);
+                graph.get(v).add(u);
             }
 
 
             line = bi.readLine();
             String[] numStr = line.split("\\s");
             int guessesCount = Integer.parseInt(numStr[0]);
-            int minimumScoreToWin = Integer.parseInt(numStr[1]);
+            minimumScoreToWin = Integer.parseInt(numStr[1]);
 
 
-            for (int iii = 0; iii <= verticesCount; iii++)
-                guessedGraph.add(new HashMap<>());
             for (int j = 0; j < guessesCount; j++) {
                 line = bi.readLine();
                 numStr = line.split("\\s");
-                int u = Integer.parseInt(numStr[0]);
-                int v = Integer.parseInt(numStr[1]);
-                guessedGraph.get(v).put(u, true);
+                int u = Integer.parseInt(numStr[0]) - 1;
+                int v = Integer.parseInt(numStr[1]) - 1;
+                guessedGraph.get(v).add(u);
             }
-            int totalWon = 0;
-            for (int currentRoot = 1; currentRoot <= verticesCount; currentRoot++) {
-                Found guessesAreTrueCount = new Found();
-                HashMap<Integer, Boolean> visited = new HashMap<>();
-                process(minimumScoreToWin, guessesAreTrueCount, visited, currentRoot, graph, guessedGraph);
-                if (guessesAreTrueCount.getFound() >= minimumScoreToWin) {
-                    totalWon++;
-                }
-            }
+            Found counter = new Found();
+            dfs(0, -1, counter);
+            int totalWon = dfs2(0, -1, counter.getFound());
             int D = gcd(totalWon, verticesCount);
 
             if (totalWon == 0)
@@ -64,32 +62,48 @@ public class Solution {
         }
     }
 
-    public static int gcd(int p, int q) {
+    static int gcd(int p, int q) {
         if (q == 0) {
             return p;
         }
         return gcd(q, p % q);
     }
 
-    static void process(int minimumScoreToWin, Found found, HashMap<Integer, Boolean> visited, int current, ArrayList<HashMap<Integer, Boolean>> graph, ArrayList<HashMap<Integer, Boolean>> guessedGraph) {
-        ArrayDeque<Integer> queue = new ArrayDeque<>(graph.size());
-        queue.add(current);
-        while (!queue.isEmpty() && found.getFound() < minimumScoreToWin) {
-            current = queue.pop();
-            visited.put(current, true);
-            HashMap<Integer, Boolean> edges = graph.get(current);
-            for (Integer edge :
-                    edges.keySet()) {
-                if (!visited.containsKey(edge)) {
-                    if (guessedGraph.get(edge) != null) {
-                        queue.add(edge);
-                        if (guessedGraph.get(edge).containsKey(current)) {
-                            found.increment();
-                        }
-                    }
-                }
-            }
+    static void dfs(int u, int p, Found counter) {
+        // если предположение верно
+        if (guessedGraph.get(u).contains(p)) {
+            // увеличим общий счетчик
+            counter.increment();
         }
+        // пройдемся по детям
+        for (int v : graph.get(u)) {
+            // пропустим значение, которое уже видели в качестве родителя
+            if (v == p)
+                continue;
+            // сходим вглубь
+            dfs(v, u, counter);
+        }
+    }
+
+    static int dfs2(int u, int p, int currentCounter) {
+        if (p != -1) {
+            if (guessedGraph.get(p).contains(u))
+                currentCounter++;
+            // если верно обратное, т.е. u является родителем у p
+            if (guessedGraph.get(u).contains(p))
+                // убавим счетчик
+                currentCounter--;
+        }
+        int result = 0;
+        // достаточно набрали для выигрыша в игре
+        if (currentCounter >= minimumScoreToWin)
+            // прибавим счетчик выигранных игр
+            result++;
+
+        for (int v : graph.get(u))
+            if (v != p)
+                result += dfs2(v, u, currentCounter);
+        return result;
     }
 
     static class Found {
@@ -105,6 +119,10 @@ public class Solution {
 
         void increment() {
             this.found++;
+        }
+
+        void decrement() {
+            this.found--;
         }
     }
 
